@@ -1,14 +1,11 @@
----
-title: "NBA EDA"
-author: "Chad Allison"
-date: "2023-07-11"
-output: github_document
-knit: (function(input, ...) { rmarkdown::render(input, output_file = "README.md", envir = globalenv()) })
----
+NBA EDA
+================
+Chad Allison
+2023-07-11
 
 ### Loading Libraries
 
-```{r message = F, warning = F}
+``` r
 library(tidyverse)
 library(janitor)
 library(tvthemes)
@@ -26,7 +23,7 @@ theme_set(theme_custom)
 
 ### Data Import
 
-```{r}
+``` r
 # doing this to suppress warning message for every usage
 write_csv(load_nba_pbp(), "full_pbp.csv")
 full_pbp = read_csv("full_pbp.csv", col_types = cols()) |>
@@ -35,7 +32,7 @@ full_pbp = read_csv("full_pbp.csv", col_types = cols()) |>
 
 ### Adding Team Color Codes
 
-```{r}
+``` r
 team_color_codes = c("#C8102E", "#000000", "#007A33", "#1D1160", "#CE1141", "#860038",
                      "#00538C", "#0E2240", "#C8102E", "#1D428A", "#CE1141", "#FDBB30",
                      "#C8102E", "#552583", "#5D76A9", "#98002E", "#00471B", "#236192",
@@ -46,10 +43,9 @@ team_color_df = data.frame(team = sort(unique(full_pbp$home_team_abbrev)),
                            hex = team_color_codes)
 ```
 
-
 ### Getting End Game Data
 
-```{r}
+``` r
 end_games = full_pbp |>
   filter(text == "End of Game") |>
   select(game_id, date = game_date, away_team = away_team_abbrev,
@@ -60,9 +56,25 @@ end_games = full_pbp |>
 end_games
 ```
 
+    ## # A tibble: 1,173 × 8
+    ##      game_id date       away_team away_score home_score home_t…¹ win_t…² lose_…³
+    ##        <dbl> <date>     <chr>          <dbl>      <dbl> <chr>    <chr>   <chr>  
+    ##  1 401469330 2023-04-02 GS               110        112 DEN      DEN     GS     
+    ##  2 401469328 2023-04-02 IND              105        115 CLE      CLE     IND    
+    ##  3 401469329 2023-04-02 PHI              104        117 MIL      MIL     PHI    
+    ##  4 401469326 2023-04-02 LAL              134        109 HOU      LAL     HOU    
+    ##  5 401469327 2023-04-02 PHX              128        118 OKC      PHX     OKC    
+    ##  6 401469322 2023-04-02 DAL              130        132 ATL      ATL     DAL    
+    ##  7 401469323 2023-04-02 WSH              109        118 NY       NY      WSH    
+    ##  8 401469324 2023-04-02 DET              102        128 ORL      ORL     DET    
+    ##  9 401469325 2023-04-02 SA               142        134 SAC      SA      SAC    
+    ## 10 401469319 2023-04-02 UTAH             110        111 BKN      BKN     UTAH   
+    ## # … with 1,163 more rows, and abbreviated variable names ¹​home_team, ²​win_team,
+    ## #   ³​lose_team
+
 ### Getting Team Records
 
-```{r}
+``` r
 team_records = end_games |>
   count(win_team) |>
   rename(team = win_team, wins = n) |>
@@ -76,9 +88,24 @@ team_records |>
   arrange(desc(pct))
 ```
 
+    ## # A tibble: 30 × 5
+    ##    team   wins losses   pct record
+    ##    <chr> <int>  <int> <dbl> <chr> 
+    ##  1 MIL      56     22 0.718 56-22 
+    ##  2 BOS      54     24 0.692 54-24 
+    ##  3 DEN      52     26 0.667 52-26 
+    ##  4 PHI      51     27 0.654 51-27 
+    ##  5 MEM      49     29 0.628 49-29 
+    ##  6 CLE      48     30 0.615 48-30 
+    ##  7 SAC      47     31 0.603 47-31 
+    ##  8 NY       46     33 0.582 46-33 
+    ##  9 BKN      43     35 0.551 43-35 
+    ## 10 PHX      43     35 0.551 43-35 
+    ## # … with 20 more rows
+
 ### First to 69
 
-```{r}
+``` r
 get_first_to_69 = function(gid) {
   return(full_pbp |>
     filter(game_id == gid) |>
@@ -99,9 +126,14 @@ first_to_69_df |>
   summarise(pct = round(sum(ft69_win) / n(), 3))
 ```
 
+    ## # A tibble: 1 × 1
+    ##     pct
+    ##   <dbl>
+    ## 1   0.8
+
 ### Getting Offensive and Defensive PPG Data (Regular Season)
 
-```{r}
+``` r
 get_off_ppg = function(team) {
   home_scores = end_games |> filter(home_team == team) |> pull(home_score)
   away_scores = end_games |> filter(away_team == team) |> pull(away_score)
@@ -131,9 +163,11 @@ team_ppg |>
   scale_y_continuous(breaks = seq(100, 130, by = 2))
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+
 ### Reframing End Game Data
 
-```{r}
+``` r
 reframed_end_games = end_games |>
   group_by(game_id, date, team = home_team) |>
   reframe(opponent = away_team,
@@ -150,9 +184,24 @@ reframed_end_games = end_games |>
 reframed_end_games
 ```
 
+    ## # A tibble: 2,346 × 7
+    ##      game_id date       team  opponent team_score opp_score home_away
+    ##        <dbl> <date>     <chr> <chr>         <dbl>     <dbl> <chr>    
+    ##  1 401468016 2022-10-18 BOS   PHI             126       117 home     
+    ##  2 401468017 2022-10-18 GS    LAL             123       109 home     
+    ##  3 401468018 2022-10-19 DET   ORL             113       109 home     
+    ##  4 401468019 2022-10-19 IND   WSH             107       114 home     
+    ##  5 401468020 2022-10-19 ATL   HOU             117       107 home     
+    ##  6 401468021 2022-10-19 BKN   NO              108       130 home     
+    ##  7 401468022 2022-10-19 MIA   CHI             108       116 home     
+    ##  8 401468023 2022-10-19 TOR   CLE             108       105 home     
+    ##  9 401468024 2022-10-19 MEM   NY              115       112 home     
+    ## 10 401468025 2022-10-19 MIN   OKC             115       108 home     
+    ## # … with 2,336 more rows
+
 ### xxx - third qtr leads
 
-```{r}
+``` r
 end_games |>
   select(game_id, win_team, lose_team) |>
   inner_join(full_pbp |>
@@ -162,9 +211,24 @@ end_games |>
                                         home_score == away_score ~ "Tied")), by = "game_id")
 ```
 
+    ## # A tibble: 1,173 × 4
+    ##      game_id win_team lose_team win_3q
+    ##        <dbl> <chr>    <chr>     <chr> 
+    ##  1 401469330 DEN      GS        DEN   
+    ##  2 401469328 CLE      IND       IND   
+    ##  3 401469329 MIL      PHI       MIL   
+    ##  4 401469326 LAL      HOU       LAL   
+    ##  5 401469327 PHX      OKC       PHX   
+    ##  6 401469322 ATL      DAL       ATL   
+    ##  7 401469323 NY       WSH       NY    
+    ##  8 401469324 ORL      DET       ORL   
+    ##  9 401469325 SA       SAC       SA    
+    ## 10 401469319 BKN      UTAH      BKN   
+    ## # … with 1,163 more rows
+
 ### Scorigami
 
-```{r}
+``` r
 end_games |>
   transmute(date, home_team, away_team,
             win_score = ifelse(home_score > away_score, home_score, away_score),
@@ -182,9 +246,11 @@ end_games |>
        caption = "Data: NBA.com via {hoopR}")
 ```
 
+![](README_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
 ### historic final scores + last time a score happened
 
-```{r message = F, warning = F}
+``` r
 get_final_scores = function(yr) {
   return(load_nba_schedule(yr) |>
     filter(home_score != 0 & away_score != 0) |>
@@ -213,9 +279,11 @@ last_time_score_happened = function(fscore) {
 last_time_score_happened("112-110")
 ```
 
+    ## [1] "2023-04-02"
+
 ### xxx
 
-```{r}
+``` r
 wend_records = end_games |>
   mutate(weekday = wday(date, label = T, abbr = T),
          weekend = ifelse(weekday %in% c("Fri", "Sat", "Sun"), "weekend", "weekday")) |>
@@ -257,59 +325,27 @@ wend_records |>
        title = "Win Percentages on Weekdays v. Weekends",
        subtitle = paste0("Correlation: ", round(cor(wend_records$weekday_pct, wend_records$weekend_pct), 3)),
        caption = "Data: NBA.com via {hoopR}")
+```
 
+![](README_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
 wend_records |>
   transmute(team, weekday_pct, weekend_pct, diff = weekday_pct - weekend_pct, abs_diff = abs(diff)) |>
   arrange(desc(abs_diff))
 ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    ## # A tibble: 30 × 5
+    ##    team  weekday_pct weekend_pct   diff abs_diff
+    ##    <chr>       <dbl>       <dbl>  <dbl>    <dbl>
+    ##  1 BKN         0.405       0.722 -0.317    0.317
+    ##  2 WSH         0.579       0.3    0.279    0.279
+    ##  3 LAL         0.41        0.615 -0.205    0.205
+    ##  4 LAC         0.6         0.412  0.188    0.188
+    ##  5 MIL         0.795       0.618  0.177    0.177
+    ##  6 DET         0.279       0.114  0.165    0.165
+    ##  7 OKC         0.409       0.571 -0.162    0.162
+    ##  8 UTAH        0.537       0.378  0.159    0.159
+    ##  9 GS          0.452       0.595 -0.143    0.143
+    ## 10 ATL         0.439       0.568 -0.129    0.129
+    ## # … with 20 more rows

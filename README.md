@@ -1,7 +1,5 @@
-NBA EDA
+nbaR
 ================
-Chad Allison
-2023-07-11
 
 ### Loading Libraries
 
@@ -25,7 +23,7 @@ theme_set(theme_custom)
 
 ``` r
 # doing this to suppress warning message for every usage
-write_csv(load_nba_pbp(), "full_pbp.csv")
+# write_csv(load_nba_pbp(), "full_pbp.csv")
 full_pbp = read_csv("full_pbp.csv", col_types = cols()) |>
   filter(home_team_abbrev != "LEB") # excludes all star game
 ```
@@ -117,19 +115,24 @@ get_first_to_69 = function(gid) {
     pull(first_to_69))
 }
 
-first_to_69_df = end_games |>
-  sample_n(10) |>
-  mutate(ft69 = sapply(game_id, get_first_to_69))
+# first_to_69_df = end_games |>
+#   mutate(ft69 = sapply(game_id, get_first_to_69))
 
-first_to_69_df |>
-  mutate(ft69_win = ifelse(ft69 == win_team, 1, 0)) |>
-  summarise(pct = round(sum(ft69_win) / n(), 3))
+first_to_69_df = read_csv("first_to_69.csv", col_types = cols())
+
+last_choke = first_to_69_df |>
+  filter(win_team != ft69) |>
+  slice_max(date, n = 1)
+
+paste0("Most recent First to 69 choke: ", last_choke$ft69, " choke v. ",
+       last_choke$win_team, " on ", month(last_choke$date, label = T, abbr = F),
+       " ", day(last_choke$date), ", ", year(last_choke$date))
 ```
 
-    ## # A tibble: 1 × 1
-    ##     pct
-    ##   <dbl>
-    ## 1   0.8
+    ## [1] "Most recent First to 69 choke: GS choke v. DEN on April 2, 2023" 
+    ## [2] "Most recent First to 69 choke: IND choke v. CLE on April 2, 2023"
+    ## [3] "Most recent First to 69 choke: MEM choke v. CHI on April 2, 2023"
+    ## [4] "Most recent First to 69 choke: MIN choke v. POR on April 2, 2023"
 
 ### Getting Offensive and Defensive PPG Data (Regular Season)
 
